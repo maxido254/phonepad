@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>PhonePad</title>
+<style>
+  /* Bundled inside the Android app: no network, fonts, scripts or images needed. */
+  :root {
+    --shell1:#f7f8fb; --shell2:#d9dde6;
+    --dark:#14171d; --dark2:#262b34; --accent:#2f7bff;
+    --tri:#4fd8b0; --cir:#ff6b73; --cro:#6aa5ff; --squ:#f08ad8;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; touch-action:none; }
+  html,body { margin:0; height:100%; background:#05070b; overflow:hidden; font-family:system-ui,sans-serif; }
+
+  /* fixed 800x360 design canvas, scaled by JS to fit any phone */
+  #pad { position:absolute; left:50%; top:50%; width:800px; height:360px; transform-origin:center; transform:translate(-50%,-50%); }
+  .abs { position:absolute; }
+
+  #shell { left:0; top:14px; width:800px; height:340px; border-radius:90px 90px 150px 150px / 110px 110px 150px 150px;
+           background:linear-gradient(180deg,var(--shell1),var(--shell2)); box-shadow:0 0 0 2px #fff3 inset, 0 6px 30px #0008; }
+  #center { left:228px; top:14px; width:344px; height:340px; background:linear-gradient(180deg,#1a1d24,#0b0d11);
+            clip-path:polygon(0 0,100% 0,100% 60%,88% 100%,12% 100%,0 60%); border-radius:30px 30px 0 0; }
+  #lightL,#lightR { top:30px; width:4px; height:210px; border-radius:2px; background:var(--accent); opacity:.85; box-shadow:0 0 8px var(--accent); }
+  #lightL { left:232px; } #lightR { left:564px; }
+  #touchpad { left:262px; top:46px; width:276px; height:128px; border-radius:18px 18px 40px 40px;
+              background:linear-gradient(180deg,#d5d9e2,#b9bfcb); border:2px solid #fff5; }
+  #touchpad.on { background:linear-gradient(180deg,#8fb6ff,#5f8ff0); }
+
+  .key { position:absolute; display:flex; align-items:center; justify-content:center;
+         background:linear-gradient(180deg,var(--dark2),var(--dark)); border:2px solid #0006; color:#cfd6e2; font-weight:700; font-size:13px;
+         box-shadow:0 2px 4px #0005, 0 1px 0 #fff2 inset; }
+  .key.on { background:var(--accent); color:#fff; }
+  .face { width:50px; height:50px; border-radius:50%; }
+  .face svg { width:26px; height:26px; fill:none; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+  .dp { width:46px; height:46px; border-radius:10px; }
+  .dp svg { width:18px; height:18px; fill:#cfd6e2; }
+  .dp.on svg { fill:#fff; }
+  .shoulder { height:34px; border-radius:12px; }
+  .trigger { height:42px; border-radius:14px 14px 8px 8px; }
+  .mini { width:44px; height:22px; border-radius:11px; font-size:9px; letter-spacing:.5px; }
+  #ps { left:378px; top:196px; width:44px; height:44px; border-radius:50%; }
+  #ps span { font-size:15px; font-weight:800; font-style:italic; }
+
+  .stick { width:130px; height:130px; border-radius:50%; background:radial-gradient(circle,#0e1015 55%,#1d212a 100%); border:3px solid #2b303a;
+           display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 4px #0003 inset; }
+  .knob { width:78px; height:78px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#4a515e,#222730);
+          border:3px solid #5b6270; pointer-events:none; }
+  .stick.on .knob { border-color:var(--accent); }
+
+  #status { position:absolute; top:0; left:50%; transform:translateX(-50%); font-size:11px; padding:1px 10px; border-radius:0 0 8px 8px; color:#fff; background:#c0392b; z-index:5; }
+  #status.ok { background:#1f9d55; }
+  #rotate { display:none; position:fixed; inset:0; z-index:9; background:#05070b; color:#fff; align-items:center; justify-content:center; text-align:center; font-size:20px; padding:20px; }
+  @media (orientation:portrait) { #rotate { display:flex; } }
+</style>
+</head>
+<body>
+<div id="rotate">Rotate your phone to landscape</div>
+<div id="status">searching for PC…</div>
+
+<div id="pad">
+  <div id="shell" class="abs"></div>
+  <div id="center" class="abs"></div>
+  <div id="lightL" class="abs"></div><div id="lightR" class="abs"></div>
+  <div id="touchpad" class="abs" data-btn="TOUCHPAD"></div>
+
+  <div class="key trigger"  data-trig="LT" style="left:22px;top:0;width:116px">L2</div>
+  <div class="key shoulder" data-btn="LB"  style="left:146px;top:4px;width:110px">L1</div>
+  <div class="key shoulder" data-btn="RB"  style="left:544px;top:4px;width:110px">R1</div>
+  <div class="key trigger"  data-trig="RT" style="left:662px;top:0;width:116px">R2</div>
+
+  <div class="key dp" data-btn="UP"    style="left:95px;top:53px"><svg viewBox="0 0 10 10"><path d="M5 1 9 8H1z"/></svg></div>
+  <div class="key dp" data-btn="DOWN"  style="left:95px;top:145px"><svg viewBox="0 0 10 10"><path d="M5 9 9 2H1z"/></svg></div>
+  <div class="key dp" data-btn="LEFT"  style="left:49px;top:99px"><svg viewBox="0 0 10 10"><path d="M1 5 8 1v8z"/></svg></div>
+  <div class="key dp" data-btn="RIGHT" style="left:141px;top:99px"><svg viewBox="0 0 10 10"><path d="M9 5 2 1v8z"/></svg></div>
+
+  <div class="key face" data-btn="Y" style="left:657px;top:45px"><svg viewBox="0 0 24 24" stroke="var(--tri)"><path d="M12 4 21 19H3z"/></svg></div>
+  <div class="key face" data-btn="A" style="left:657px;top:145px"><svg viewBox="0 0 24 24" stroke="var(--cro)"><path d="M5 5l14 14M19 5 5 19"/></svg></div>
+  <div class="key face" data-btn="X" style="left:607px;top:95px"><svg viewBox="0 0 24 24" stroke="var(--squ)"><rect x="4" y="4" width="16" height="16" rx="1"/></svg></div>
+  <div class="key face" data-btn="B" style="left:707px;top:95px"><svg viewBox="0 0 24 24" stroke="var(--cir)"><circle cx="12" cy="12" r="8"/></svg></div>
+
+  <div class="key mini" data-btn="CREATE"  style="left:226px;top:54px;width:34px;height:34px;border-radius:50%;font-size:0"></div>
+  <div class="key mini" data-btn="OPTIONS" style="left:540px;top:54px;width:34px;height:34px;border-radius:50%;font-size:0"></div>
+  <div class="key" id="ps" data-btn="PS"><span>PS</span></div>
+  <div class="key mini" id="gyroBtn" style="left:373px;top:268px;width:54px;height:26px;z-index:3">GYRO</div>
+
+  <div class="stick abs" id="stickL" data-stick="L" style="left:205px;top:210px;width:130px;height:130px;z-index:2"><div class="knob"></div></div>
+  <div class="stick abs" id="stickR" data-stick="R" style="left:465px;top:210px;width:130px;height:130px;z-index:2"><div class="knob"></div></div>
+</div>
+
+<script>
+const pad = document.getElementById('pad');
+const statusEl = document.getElementById('status');
+let scale = 1;
+function fit() {
+  scale = Math.min(innerWidth / 800, innerHeight / 360);
+  pad.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+addEventListener('resize', fit); addEventListener('orientationchange', fit); fit();
+
+// ---- talk to the Android app, which sends everything straight to the PC app over Wi-Fi ----
+const native = window.PhonePadNative;
+const send = o => { if (native) native.send(JSON.stringify(o)); };
+const buzz = () => { try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} };
+window.nativeStatus = ok => {
+  statusEl.textContent = ok ? 'connected to PC' : 'searching for PC…';
+  statusEl.className = ok ? 'ok' : '';
+};
+
+// ---- buttons (multi-touch) ----
+document.querySelectorAll('[data-btn]').forEach(el => {
+  const press = down => {
+    el.classList.toggle('on', down);
+    send({ t: 'b', b: el.dataset.btn, d: down ? 1 : 0 });
+    if (down) buzz();
+  };
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); press(true); });
+  ['pointerup', 'pointercancel'].forEach(ev => el.addEventListener(ev, () => press(false)));
+});
+
+// ---- analog triggers L2/R2: touch high = light pull, slide down = full pull ----
+document.querySelectorAll('[data-trig]').forEach(el => {
+  let active = null, sawPressure = false;
+  const val = e => {
+    const r = el.getBoundingClientRect();
+    const pos = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+    let v = 0.25 + 0.75 * pos;
+    if (e.pressure > 0 && e.pressure !== 0.5 && e.pressure < 1) sawPressure = true;
+    if (sawPressure && e.pressure > 0) v = Math.min(1, 0.15 + e.pressure * 1.2);
+    return +v.toFixed(2);
+  };
+  const set = v => { el.style.filter = `brightness(${1 + v * 0.8})`; send({ t: 't', k: el.dataset.trig, v }); };
+  el.addEventListener('pointerdown', e => { active = e.pointerId; sawPressure = false; el.setPointerCapture(e.pointerId); el.classList.add('on'); set(val(e)); buzz(); });
+  el.addEventListener('pointermove', e => { if (e.pointerId === active) set(val(e)); });
+  const end = () => { if (active === null) return; active = null; el.classList.remove('on'); el.style.filter = ''; send({ t: 't', k: el.dataset.trig, v: 0 }); };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+});
+
+// ---- gyro aiming: the app feeds phone rotation (deg/s) into the right stick ----
+// If aiming feels inverted, flip the sign of GYRO_X / GYRO_Y.
+const GYRO_X = 1, GYRO_Y = 1;
+const GYRO_FULL = 60;           // deg/s of rotation that equals full stick
+const gyroBtn = document.getElementById('gyroBtn');
+let gyroOn = false;
+window.rStickActive = false;
+gyroBtn.addEventListener('pointerdown', () => {
+  gyroOn = !gyroOn;
+  gyroBtn.classList.toggle('on', gyroOn);
+  if (native) native.setGyro(gyroOn);
+  if (!gyroOn && !window.rStickActive) send({ t: 's', s: 'R', x: 0, y: 0 });
+});
+window.nativeGyro = (yaw, pitch) => {
+  if (!gyroOn || window.rStickActive) return;
+  if (Math.abs(yaw) < 2) yaw = 0;       // deadzone, deg/s
+  if (Math.abs(pitch) < 2) pitch = 0;
+  const cl = v => Math.max(-1, Math.min(1, v));
+  send({ t: 's', s: 'R', x: +cl(yaw * GYRO_X / GYRO_FULL).toFixed(3), y: +cl(pitch * GYRO_Y / GYRO_FULL).toFixed(3) });
+};
+
+// ---- analog sticks (tap a stick = L3 / R3) ----
+function makeStick(el) {
+  const knob = el.querySelector('.knob');
+  const side = el.dataset.stick;
+  const click = side === 'L' ? 'L3' : 'R3';
+  let active = null, last = 0, t0 = 0, moved = 0;
+  const move = e => {
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const max = r.width / 2;
+    let dx = e.clientX - cx, dy = e.clientY - cy;
+    const dist = Math.hypot(dx, dy);
+    if (dist > max) { dx *= max / dist; dy *= max / dist; }
+    moved = Math.max(moved, Math.hypot(dx, dy));
+    knob.style.transform = `translate(${dx / scale}px,${dy / scale}px)`;
+    const now = performance.now();
+    if (now - last > 12) {
+      send({ t: 's', s: side, x: +(dx / max).toFixed(3), y: +(-dy / max).toFixed(3) });
+      last = now;
+    }
+  };
+  const end = () => {
+    if (active === null) return;
+    active = null;
+    if (side === 'R') window.rStickActive = false;
+    el.classList.remove('on');
+    knob.style.transform = 'translate(0,0)';
+    send({ t: 's', s: side, x: 0, y: 0 });
+    if (performance.now() - t0 < 200 && moved < 10 * scale) {
+      send({ t: 'b', b: click, d: 1 });
+      setTimeout(() => send({ t: 'b', b: click, d: 0 }), 80);
+    }
+  };
+  el.addEventListener('pointerdown', e => {
+    active = e.pointerId; t0 = performance.now(); moved = 0;
+    if (side === 'R') window.rStickActive = true;
+    el.setPointerCapture(e.pointerId); el.classList.add('on'); move(e);
+  });
+  el.addEventListener('pointermove', e => { if (e.pointerId === active) move(e); });
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+}
+document.querySelectorAll('[data-stick]').forEach(makeStick);
+
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+</script>
+</body>
+</html>
