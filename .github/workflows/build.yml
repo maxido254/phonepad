@@ -1,1 +1,53 @@
+name: Build apps
 
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  android:
+    name: Android app (APK)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate project folder
+        shell: bash
+        run: |
+          F=$(find . -name phonepad_pc.py -not -path './.git/*' | head -1)
+          if [ -z "$F" ]; then echo "pc/phonepad_pc.py not found in the repo"; ls -R; exit 1; fi
+          ROOT=$(dirname "$(dirname "$F")")
+          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
+          echo "Project folder: $ROOT"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build debug APK
+        run: gradle -p "$ROOT/android" assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhonePad-Android
+          path: ${{ env.ROOT }}/android/app/build/outputs/apk/debug/app-debug.apk
+
+  windows:
+    name: Windows app (EXE)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate project folder
+        run: |
+          F=$(find . -name phonepad_pc.py -not -path './.git/*' | head -1)
+          if [ -z "$F" ]; then echo "pc/phonepad_pc.py not found in the repo"; ls -R; exit 1; fi
+          ROOT=$(dirname "$(dirname "$F")")
+          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
+      - uses:
