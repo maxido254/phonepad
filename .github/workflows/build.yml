@@ -15,12 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Locate project folder
         shell: bash
-        run: |
-          F=$(find . -name phonepad_pc.py -not -path './.git/*' | head -1)
-          if [ -z "$F" ]; then echo "pc/phonepad_pc.py not found in the repo"; ls -R; exit 1; fi
-          ROOT=$(dirname "$(dirname "$F")")
-          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
-          echo "Project folder: $ROOT"
+        run: echo "ROOT=$(dirname "$(dirname "$(find . -name phonepad_pc.py -not -path './.git/*' | head -1)")")" >> "$GITHUB_ENV"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -29,6 +24,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Build debug APK
+        shell: bash
         run: gradle -p "$ROOT/android" assembleDebug
       - uses: actions/upload-artifact@v4
         with:
@@ -39,15 +35,23 @@ jobs:
     name: Windows app (EXE)
     runs-on: windows-latest
     timeout-minutes: 15
-    defaults:
-      run:
-        shell: bash
     steps:
       - uses: actions/checkout@v4
       - name: Locate project folder
-        run: |
-          F=$(find . -name phonepad_pc.py -not -path './.git/*' | head -1)
-          if [ -z "$F" ]; then echo "pc/phonepad_pc.py not found in the repo"; ls -R; exit 1; fi
-          ROOT=$(dirname "$(dirname "$F")")
-          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
-      - uses:
+        shell: bash
+        run: echo "ROOT=$(dirname "$(dirname "$(find . -name phonepad_pc.py -not -path './.git/*' | head -1)")")" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install build tools
+        shell: bash
+        env:
+          VGAMEPAD_SKIP_VIGEMBUS_INSTALL: 'true'
+        run: pip install -r "$ROOT/pc/requirements.txt" pyinstaller
+      - name: Build exe
+        shell: bash
+        run: pyinstaller --onefile --windowed --name PhonePad-PC --collect-all vgamepad "$ROOT/pc/phonepad_pc.py"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhonePad-Windows
+          path: dist/PhonePad-PC.exe
