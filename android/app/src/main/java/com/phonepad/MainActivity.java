@@ -244,6 +244,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         web.setBackgroundColor(0xFF05070B);
         WebSettings st = web.getSettings();
         st.setJavaScriptEnabled(true);
+        st.setDomStorageEnabled(true);
         st.setAllowFileAccess(true);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
         web.setHapticFeedbackEnabled(false);
@@ -302,6 +303,17 @@ public class MainActivity extends Activity implements SensorEventListener {
             if (!json.contains("\"t\":\"s\"")) {
                 net.postDelayed(new Runnable() { @Override public void run() { sendPacket(b); } }, 25);
             }
+        }
+
+        /** Saved control layout (position/size of every control). */
+        @JavascriptInterface
+        public void saveProfile(String name, String json) {
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("profile_" + name, json).apply();
+        }
+
+        @JavascriptInterface
+        public String loadProfile(String name) {
+            return getSharedPreferences(PREFS, MODE_PRIVATE).getString("profile_" + name, "");
         }
 
         @JavascriptInterface

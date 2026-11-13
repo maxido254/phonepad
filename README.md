@@ -22,6 +22,14 @@ Push this repo to GitHub. The **Build apps** workflow (Actions tab) produces:
 4. Open **PhonePad** on the phone, tap **Find my PC**, then **Connect**. If the PC isn't found, type the address shown in the PC app.
 5. Tap **GYRO** for tilt-to-aim on the right stick. Press Back on the phone to return to the connect screen.
 
+## Customize your layout
+
+1. On the controller screen, **press and hold the small ✎ tab** at the top centre (hold ~½ s, so it can't trigger mid-game).
+2. **Move:** drag any button, stick, trigger or the touchpad where you want it (it stays on screen).
+3. **Resize:** select a control, then drag the round ⤡ handle on its corner, or use the size slider. The **Whole pad** slider scales everything.
+4. **Shell** hides the grey controller body if you want a free-form layout. **Reset control** / **Reset all** undo changes. ⇅ moves the toolbar out of your way.
+5. Everything **auto-saves to the default profile** and loads every time the controller opens. Tap **Done** to go back to playing.
+
 ## Button mapping (virtual Xbox 360 pad)
 
 ✕=A, ○=B, □=X, △=Y, L1/R1=LB/RB, L2/R2=LT/RT (analog: touch high = light pull, slide down = full), Create/touchpad=Back, Options=Start, PS=Guide, tap a stick=L3/R3.
@@ -30,8 +38,8 @@ Push this repo to GitHub. The **Build apps** workflow (Actions tab) produces:
 
 ```
 android/                          Android app (Java, no dependencies)
-  app/src/main/java/.../MainActivity.java   connect screen, UDP sender, gyro
-  app/src/main/assets/index.html            controller UI (bundled, works offline)
+  app/src/main/java/.../MainActivity.java   connect screen, UDP sender, gyro, profile storage
+  app/src/main/assets/index.html            controller UI + layout editor (bundled, works offline)
 pc/phonepad_pc.py                 Windows app (Tk window + UDP listener + vgamepad)
 .github/workflows/build.yml       builds the APK and the EXE
 ```
