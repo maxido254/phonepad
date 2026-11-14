@@ -22,9 +22,11 @@
   #dots { margin-top:3vh; display:flex; gap:14px; height:10px; }
   #dots span { width:10px; height:10px; border-radius:50%; opacity:0; transform:scale(.3); transition:opacity .5s, transform .5s cubic-bezier(.3,1.6,.5,1); }
   #dots span.show { opacity:1; transform:scale(1); box-shadow:0 0 12px currentColor; }
+  #by { position:fixed; bottom:calc(env(safe-area-inset-bottom,0px) + 30px); left:0; right:0; text-align:center; color:#8a9bb2; font-size:10px; letter-spacing:.55em; padding-left:.55em; opacity:0; transition:opacity 1.2s; }
+  #by.show { opacity:.9; }
   #skip { position:fixed; bottom:calc(env(safe-area-inset-bottom,0px) + 8px); left:0; right:0; text-align:center; color:#6b7785; font-size:11px; letter-spacing:.1em; opacity:0; transition:opacity .6s; }
   #skip.show { opacity:.8; }
-  body.out #stage, body.out #fx, body.out #skip { opacity:0; }
+  body.out #stage, body.out #fx, body.out #skip, body.out #by { opacity:0; }
 </style>
 </head>
 <body>
@@ -66,6 +68,7 @@
   <div id="name"><b>PCStation</b> <i>Gamepad</i></div>
   <div id="dots"><span style="background:#2f7bff;color:#2f7bff"></span><span style="background:#ff4d5a;color:#ff4d5a"></span><span style="background:#3fb950;color:#3fb950"></span><span style="background:#f08ad8;color:#f08ad8"></span></div>
 </div>
+<div id="by">MAXIDO ENTERTAINMENT</div>
 <div id="skip">TAP TO SKIP</div>
 
 <script>
@@ -152,7 +155,7 @@ function frame(now) {
   draw(t, dt);
   if (step < 1 && t > 1.0) { skip.classList.add('show'); step = 1; }
   if (step < 2 && t > T_LOGO) { logo.classList.add('show'); setTimeout(() => logo.classList.add('pulse'), 1000); step = 2; }
-  if (step < 3 && t > T_NAME) { nameEl.classList.add('show'); step = 3; }
+  if (step < 3 && t > T_NAME) { nameEl.classList.add('show'); document.getElementById('by').classList.add('show'); step = 3; }
   if (step < 4 && t > T_DOTS) { dots.forEach((d, i) => setTimeout(() => d.classList.add('show'), i * 160)); step = 4; }
   if (step < 5 && t > T_OUT) { step = 5; finish(); }
   if (!done || t < T_DONE + 1) requestAnimationFrame(frame);

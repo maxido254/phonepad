@@ -1,15 +1,23 @@
-"""PCStation Gamepad (PC): receives controller input from up to 4 phones over Wi-Fi and
-presents each phone to Windows as its own virtual Xbox 360 gamepad (Player 1-4), so you can
-play local multiplayer games with friends. Double-click, then open PCStation Gamepad on each phone.
-Works fully offline on any shared network (home Wi-Fi, phone hotspot, PC hotspot).
+"""PCStation Gamepad (PC) by Maxido Entertainment.
+
+Receives controller input from up to 4 phones over Wi-Fi and presents each phone to Windows as its own
+virtual Xbox 360 gamepad (Player 1-4), so you can play local multiplayer games with friends. It also opens the
+PCStation game launcher: a fullscreen, controller-driven home screen for your games.
+Double-click, then open PCStation Gamepad on each phone. Works offline on any shared network.
 """
 import json
 import socket
+import sys
 import threading
 import time
 import tkinter as tk
+import webbrowser
+
+import pcstation_launcher as launcher
+from pcstation_icon import PNG_B64
 
 APP_NAME = "PCStation Gamepad"
+PUBLISHER = "Maxido Entertainment"
 PORT = 8765
 MAX_PLAYERS = 4        # XInput (the Xbox 360 pad API that games use) only exposes 4 controllers
 WATCHDOG_SECONDS = 3   # release a phone's inputs if it goes quiet
@@ -38,6 +46,7 @@ except Exception as exc:  # vgamepad / ViGEmBus not available
 
 pad_error = IMPORT_ERROR
 lock = threading.Lock()
+server_sock = None                                      # the UDP socket (used to buzz a phone)
 
 players = {}   # slot (1..MAX_PLAYERS) -> Player
 by_addr = {}   # (ip, port) -> Player   (a phone keeps one socket for a whole session)
@@ -50,12 +59,53 @@ class Player:
         self.pid, self.slot, self.addr, self.name = pid, slot, addr, name
         self.last_seen = time.time()
         self.connected = True
+        self.xinput = None                              # XInput slot Windows gave this virtual pad (0-3)
         self.pad = None
         if vg is not None:
             try:
                 self.pad = vg.VX360Gamepad()      # one virtual Xbox 360 pad per phone
             except Exception as exc:
                 pad_error = str(exc)
+
+
+def xinput_index(p):
+    """The XInput slot (0-3) Windows assigned to this phone's virtual pad. The launcher uses it to tell which
+    controller in the browser is which phone."""
+    if p.xinput is not None:
+        return p.xinput
+    if p.pad is None or vg is None:
+        return None
+    try:
+        import ctypes
+        from vgamepad.win import vigem_client as vcli
+        idx = ctypes.c_ulong()
+        err = vcli.vigem_target_x360_get_user_index(p.pad._busp, p.pad._devicep, ctypes.addressof(idx))
+        if err == 0x20000000 and idx.value < 4:         # 0x20000000 = VIGEM_ERROR_NONE
+            p.xinput = int(idx.value)
+    except Exception:
+        pass
+    return p.xinput
+
+
+def players_snapshot():
+    """For the launcher: who is connected (slot, phone name, id, XInput slot)."""
+    with lock:
+        return [{"slot": s, "name": p.name, "connected": p.connected, "pid": p.pid, "xinput": xinput_index(p)}
+                for s, p in sorted(players.items())]
+
+
+def identify(pid):
+    """Make a phone buzz so you can tell which controller is which."""
+    with lock:
+        p = by_id.get(pid)
+        addr = p.addr if p else None
+    if addr and server_sock:
+        try:
+            server_sock.sendto(b"BUZZ", addr)
+            return True
+        except OSError:
+            pass
+    return False
 
 
 def clamp(v, lo, hi):
@@ -211,26 +261,39 @@ def maintain():
 
 
 def main():
+    global server_sock
     make_error = None
     try:
         sock = open_socket()
+        server_sock = sock
         threading.Thread(target=listen, args=(sock,), daemon=True).start()
     except OSError as exc:
         make_error = str(exc)
 
+    lau, lau_error = None, None
+    try:
+        lau = launcher.Launcher(get_players=players_snapshot, identify=identify).start()
+    except Exception as exc:                            # the gamepad part keeps working without the launcher
+        lau_error = str(exc)
+
     root = tk.Tk()
     root.title(APP_NAME)
-    root.geometry("420x400")
+    root.geometry("440x600")
     root.resizable(False, False)
     root.configure(bg="#0f1318")
+    try:
+        root.iconphoto(True, tk.PhotoImage(data=PNG_B64))
+    except tk.TclError:
+        pass
 
     def label(text, size=11, color="#e6edf3", bold=False, pady=4):
-        w = tk.Label(root, text=text, bg="#0f1318", fg=color, wraplength=390, justify="center",
+        w = tk.Label(root, text=text, bg="#0f1318", fg=color, wraplength=400, justify="center",
                      font=("Segoe UI", size, "bold" if bold else "normal"))
         w.pack(pady=pady)
         return w
 
-    label(APP_NAME, 18, bold=True)
+    label(APP_NAME, 18, bold=True, pady=(14, 0))
+    label("by " + PUBLISHER, 9, "#7f8ea3", pady=(0, 4))
     label(f"This PC's address: {local_ip()}", 11, "#9fb0c3")
     state = label("", 12, bold=True)
 
@@ -248,7 +311,28 @@ def main():
         st.pack(side="right", padx=10)
         rows.append((who, st))
 
-    note = label("", 9, "#9fb0c3")
+    def open_launcher():
+        if lau:
+            lau.open_ui()
+
+    tk.Button(root, text="Open Game Launcher", command=open_launcher, state="normal" if lau else "disabled",
+              bg="#2f7bff", fg="white", activebackground="#4a90ff", activeforeground="white", relief="flat", cursor="hand2",
+              font=("Segoe UI", 12, "bold"), padx=22, pady=8).pack(pady=(12, 4))
+
+    auto = tk.BooleanVar(value=bool(lau and lau.settings.get("auto_open")))
+
+    def save_auto():
+        if lau:
+            lau.settings["auto_open"] = bool(auto.get())
+            lau.save_settings()
+
+    tk.Checkbutton(root, text="Open the launcher when this app starts", variable=auto, command=save_auto,
+                   bg="#0f1318", fg="#c3cfdf", selectcolor="#171d25", activebackground="#0f1318", activeforeground="#ffffff",
+                   font=("Segoe UI", 9)).pack()
+
+    note = label("", 9, "#9fb0c3", pady=(8, 4))
+    driver_btn = tk.Button(root, text="Get the gamepad driver (ViGEmBus)", relief="flat", bg="#7a2a2a", fg="white", cursor="hand2",
+                           command=lambda: webbrowser.open("https://github.com/nefarius/ViGEmBus/releases"))
 
     def refresh():
         with lock:
@@ -264,22 +348,35 @@ def main():
                 st.config(text="waiting\u2026", fg="#6b7785")
         if pad_error:
             state.config(text="Virtual gamepad unavailable", fg="#f85149")
-            note.config(text="Install the ViGEmBus driver (github.com/nefarius/ViGEmBus/releases), "
-                             "then restart this app.\n" + pad_error[:120])
+            note.config(text="Phones can't act as controllers until the ViGEmBus driver is installed. "
+                             "Install it, then restart this app.\n" + pad_error[:110])
+            if not driver_btn.winfo_ismapped():
+                driver_btn.pack(pady=4)
         elif make_error:
             state.config(text="Could not open port", fg="#f85149")
             note.config(text=make_error)
         else:
+            if driver_btn.winfo_ismapped():
+                driver_btn.pack_forget()
             n = len(snap)
             state.config(text=f"{n} of {MAX_PLAYERS} players connected" if n else "Waiting for phones\u2026",
                          fg="#3fb950" if n else "#d29922")
             note.config(text=f"Up to {MAX_PLAYERS} phones can join at once; each one is its own Xbox 360 controller.\n"
                              "Open PCStation Gamepad on each phone (same Wi-Fi) and tap \u201cFind my PC\u201d.\n"
-                             "If Windows asks, allow access on private networks.")
+                             + (("Game launcher problem: " + lau_error) if lau_error else "Real controllers (Xbox, DualSense...) work in the launcher too."))
         root.after(500, refresh)
 
     refresh()
-    root.protocol("WM_DELETE_WINDOW", lambda: (release_all_players(), root.destroy()))
+    if lau and ("--launcher" in sys.argv or lau.settings.get("auto_open")):
+        root.after(800, lau.open_ui)
+
+    def on_close():
+        release_all_players()
+        if lau:
+            lau.stop()
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", on_close)
     root.mainloop()
 
 

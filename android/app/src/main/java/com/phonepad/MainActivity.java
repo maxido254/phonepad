@@ -79,6 +79,17 @@ public class MainActivity extends Activity implements SensorEventListener {
         showSplash();
     }
 
+    /** The PC launcher asked this phone to identify itself: vibrate in a clear pattern. */
+    private void buzzPhone() {
+        try {
+            android.os.Vibrator v = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (v == null) return;
+            long[] pattern = {0, 250, 120, 250, 120, 450};
+            if (Build.VERSION.SDK_INT >= 26) v.vibrate(android.os.VibrationEffect.createWaveform(pattern, -1));
+            else v.vibrate(pattern, -1);
+        } catch (Exception ignored) { }
+    }
+
     /** Stable per-phone id so the PC can tell phones apart and give us the same player slot back. */
     private String deviceId() {
         SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
@@ -296,6 +307,8 @@ public class MainActivity extends Activity implements SensorEventListener {
                                 } else if (msg.startsWith("FULL")) {
                                     pcFull = true;
                                     slot = 0;
+                                } else if (msg.startsWith("BUZZ")) {      // "Identify this controller" from the PC launcher
+                                    buzzPhone();
                                 }
                             } catch (Exception e) {
                                 break;

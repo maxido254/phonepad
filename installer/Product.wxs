@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PCStation Gamepad installer (WiX Toolset v5). __VERSION__ is filled in by the build workflow. -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:fw="http://wixtoolset.org/schemas/v4/wxs/firewall">
+  <Package Name="PCStation Gamepad" Manufacturer="Maxido Entertainment" Version="__VERSION__"
+           UpgradeCode="3FA096BE-244E-482A-901B-3AD8DE423FCC" Scope="perMachine" Language="1033">
+
+    <SummaryInformation Description="PCStation Gamepad: use your phones as game controllers, plus a controller-driven game launcher." />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of PCStation Gamepad is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon.ico" SourceFile="icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+    <Property Id="ARPCOMMENTS" Value="By Maxido Entertainment" />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="PCStation Gamepad" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Component Id="AppExe" Guid="*">
+        <File Id="AppExeFile" Source="PCStation-Gamepad.exe" KeyPath="yes">
+          <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="PCStation Gamepad"
+                    Description="Phone gamepads and game launcher" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.ico" />
+          <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="PCStation Gamepad"
+                    Description="Phone gamepads and game launcher" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.ico" />
+          <!-- lets your phones reach the PC over Wi-Fi without a Windows Firewall prompt -->
+          <fw:FirewallException Id="PhonesUdp" Name="PCStation Gamepad (phones)" Protocol="udp" Port="8765"
+                                Scope="localSubnet" Profile="all" IgnoreFailure="yes" />
+        </File>
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="Main" Title="PCStation Gamepad" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+    </Feature>
+  </Package>
+</Wix>
