@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>PhonePad</title>
+<title>PCStation Gamepad</title>
 <style>
   /* Bundled inside the Android app: no network, fonts, scripts or images needed. */
   :root {
@@ -57,7 +57,7 @@
   /* ---- layout editor ---- */
   [hidden] { display:none !important; }
   #pad.noshell #shell, #pad.noshell #center, #pad.noshell #lightL, #pad.noshell #lightR { display:none; }
-  #editBtn { position:fixed; top:0; left:calc(50% + 78px); z-index:6; width:34px; height:20px; border-radius:0 0 8px 8px;
+  #editBtn { position:fixed; top:0; left:calc(50% + 92px); z-index:6; width:34px; height:20px; border-radius:0 0 8px 8px;
              background:#2b303a; color:#9fb0c3; font-size:12px; line-height:20px; text-align:center; opacity:.75; transition:background .5s; }
   #editBtn.hold { background:var(--accent); color:#fff; }
   body.editing #editBtn { display:none; }
@@ -141,9 +141,12 @@ addEventListener('resize', fit); addEventListener('orientationchange', fit); fit
 const native = window.PhonePadNative;
 const send = o => { if (native) native.send(JSON.stringify(o)); };
 const buzz = () => { try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} };
-window.nativeStatus = ok => {
-  statusEl.textContent = ok ? 'connected to PC' : 'searching for PC…';
+// player colours match the PC app: P1 blue, P2 red, P3 green, P4 pink
+const PLAYER_COLORS = ['#2f7bff', '#ff4d5a', '#3fb950', '#f08ad8'];
+window.nativeStatus = (ok, label, player) => {
+  statusEl.textContent = label || (ok ? 'connected to PC' : 'searching for PC…');
   statusEl.className = ok ? 'ok' : '';
+  if (ok && player > 0) document.documentElement.style.setProperty('--accent', PLAYER_COLORS[(player - 1) % 4]);
 };
 
 // ---- buttons (multi-touch) ----

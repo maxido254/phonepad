@@ -32,9 +32,9 @@ import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 
 /**
- * PhonePad: connect screen + full-screen PS5-style controller.
+ * PCStation Gamepad: connect screen + full-screen PS5-style controller.
  * The controller UI lives in assets/index.html; input is sent straight to the
- * PhonePad PC app over UDP on the local network. No internet, no server.
+ * PCStation Gamepad PC app over UDP on the local network. No internet, no server.
  */
 public class MainActivity extends Activity implements SensorEventListener {
 
@@ -55,6 +55,9 @@ public class MainActivity extends Activity implements SensorEventListener {
     private DatagramSocket socket;      // used on the net thread only
     private InetAddress target;         // used on the net thread only
     private volatile long lastPong = 0;
+    private volatile int slot = 0;           // which player the PC gave us (1-4)
+    private volatile boolean pcFull = false; // PC already has 4 phones
+    private volatile byte[] pingBytes = "PING".getBytes(StandardCharsets.UTF_8);
     private volatile boolean running = false;
 
     @Override
@@ -70,6 +73,17 @@ public class MainActivity extends Activity implements SensorEventListener {
         sensors = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         gyro = sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         showConnect();
+    }
+
+    /** Stable per-phone id so the PC can tell phones apart and give us the same player slot back. */
+    private String deviceId() {
+        SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
+        String id = p.getString("device_id", null);
+        if (id == null) {
+            id = java.util.UUID.randomUUID().toString().substring(0, 8);
+            p.edit().putString("device_id", id).apply();
+        }
+        return id;
     }
 
     // ------------------------------------------------------------ connect screen
@@ -91,13 +105,13 @@ public class MainActivity extends Activity implements SensorEventListener {
         col.setPadding(dp(32), dp(20), dp(32), dp(20));
 
         TextView title = new TextView(this);
-        title.setText("PhonePad");
+        title.setText("PCStation Gamepad");
         title.setTextColor(0xFFFFFFFF);
         title.setTextSize(26);
         col.addView(title);
 
         TextView sub = new TextView(this);
-        sub.setText("1. Open PhonePad PC on your computer\n2. Same Wi-Fi on both, then tap Find my PC");
+        sub.setText("1. Open PCStation Gamepad on your computer\n2. Same Wi-Fi on both, then tap Find my PC\nUp to 4 phones can play at once \u2014 each is its own player");
         sub.setTextColor(0xFF9FB0C3);
         sub.setTextSize(13);
         sub.setGravity(Gravity.CENTER);
@@ -183,7 +197,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                             hostInput.setText(f);
                             hint.setText("Found your PC at " + f + ". Tap Connect.");
                         } else {
-                            hint.setText("PC not found. Check PhonePad PC is open and both are on the same Wi-Fi, or type the address shown on the PC.");
+                            hint.setText("PC not found. Check PCStation Gamepad is open and both are on the same Wi-Fi, or type the address shown on the PC.");
                         }
                     }
                 });
@@ -208,6 +222,10 @@ public class MainActivity extends Activity implements SensorEventListener {
     private void startController(final String host) {
         running = true;
         lastPong = 0;
+        slot = 0;
+        pcFull = false;
+        String model = (Build.MODEL == null ? "phone" : Build.MODEL).replace("|", " ");
+        pingBytes = ("PING|" + deviceId() + "|" + model).getBytes(StandardCharsets.UTF_8);
         net.removeCallbacks(pinger);
         net.post(new Runnable() {
             @Override public void run() {
@@ -227,8 +245,15 @@ public class MainActivity extends Activity implements SensorEventListener {
                             try {
                                 DatagramPacket p = new DatagramPacket(buf, buf.length);
                                 s.receive(p);
-                                if (new String(p.getData(), 0, p.getLength(), StandardCharsets.UTF_8).startsWith("PONG")) {
+                                String msg = new String(p.getData(), 0, p.getLength(), StandardCharsets.UTF_8);
+                                if (msg.startsWith("PONG")) {
                                     lastPong = System.currentTimeMillis();
+                                    pcFull = false;
+                                    String[] parts = msg.trim().split("\\|");
+                                    try { slot = parts.length > 1 ? Integer.parseInt(parts[1]) : 0; } catch (NumberFormatException e) { slot = 0; }
+                                } else if (msg.startsWith("FULL")) {
+                                    pcFull = true;
+                                    slot = 0;
                                 }
                             } catch (Exception e) {
                                 break;
@@ -259,11 +284,15 @@ public class MainActivity extends Activity implements SensorEventListener {
     private final Runnable pinger = new Runnable() {
         @Override public void run() {
             if (!running) return;
-            sendPacket("PING".getBytes(StandardCharsets.UTF_8));
+            sendPacket(pingBytes);
             final boolean ok = System.currentTimeMillis() - lastPong < 2500;
+            final int sl = ok ? slot : 0;
+            final String label = ok
+                    ? (sl > 0 ? "Player " + sl + " \u00b7 connected" : "connected to PC")
+                    : (pcFull ? "PC full (4/4)" : "searching for PC\u2026");
             runOnUiThread(new Runnable() {
                 @Override public void run() {
-                    if (web != null) web.evaluateJavascript("window.nativeStatus&&nativeStatus(" + ok + ")", null);
+                    if (web != null) web.evaluateJavascript("window.nativeStatus&&nativeStatus(" + ok + ",'" + label + "'," + sl + ")", null);
                 }
             });
             net.postDelayed(this, 1000);
