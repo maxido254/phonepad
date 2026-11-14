@@ -107,9 +107,9 @@ jobs:
           cp "$ROOT/branding/icon.ico" build/
           cd build
           sed -i "s/__VERSION__/1.0.${{ github.run_number }}/" Product.wxs
-          wix build -arch x64 -ext WixToolset.Firewall.wixext -sval -o PCStation-Gamepad-Setup.msi Product.wxs
+          wix build -arch x64 -ext WixToolset.Firewall.wixext -o PCStation-Gamepad-Setup.msi Product.wxs
           ls -la
       - uses: actions/upload-artifact@v4
         with:
           name: PCStation-Gamepad-Installer
-          path: build/PCStation-Gamepad-Setup.msi
+          path: build/PCStation-Gamepad-Setup.msiup.msi
