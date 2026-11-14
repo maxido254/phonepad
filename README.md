@@ -88,7 +88,7 @@ After editing anything in `pc/ui_src/`, run `python pc/build_ui.py`.
 
 - Android: `gradle -p android assembleDebug`
 - PC exe: `pip install -r pc/requirements.txt pyinstaller`, then `pyinstaller --onefile --windowed --name PCStation-Gamepad --icon branding/icon.ico --collect-all vgamepad pc/pcstation_gamepad.py`
-- MSI: install WiX v5 (`dotnet tool install --global wix --version 5.0.2` and `wix extension add --global WixToolset.Firewall.wixext/5.0.2`), copy `installer/Product.wxs`, `branding/icon.ico` and the exe into one folder, replace `__VERSION__` with e.g. `1.0.0`, then `wix build -arch x64 -ext WixToolset.Firewall.wixext -sval -o PCStation-Gamepad-Setup.msi Product.wxs`
+- MSI: install WiX v5 (`dotnet tool install --global wix --version 5.0.2` and `wix extension add --global WixToolset.Firewall.wixext/5.0.2`), copy `installer/Product.wxs`, `branding/icon.ico` and the exe into one folder, replace `__VERSION__` with e.g. `1.0.0`, then `wix build -arch x64 -ext WixToolset.Firewall.wixext -o PCStation-Gamepad-Setup.msi Product.wxs`
 
 ## Security
 

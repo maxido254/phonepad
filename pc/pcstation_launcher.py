@@ -575,6 +575,13 @@ def find_browser():
 
 # ------------------------------------------------------------------ server
 
+class _Server(ThreadingHTTPServer):
+    # On Windows SO_REUSEADDR lets a second socket bind a port that is already in use, which silently
+    # hijacks it (a stale or second instance keeps swallowing connections). Never allow that.
+    allow_reuse_address = False
+    daemon_threads = True
+
+
 class Launcher:
     def __init__(self, get_players=None, directory=None, opener=open_target, scanners=None, identify=None, download=download_file):
         self.dir = directory or data_dir()
@@ -625,7 +632,7 @@ class Launcher:
         handler = make_handler(self)
         for port in PORTS:
             try:
-                self.httpd = ThreadingHTTPServer(("127.0.0.1", port), handler)
+                self.httpd = _Server(("127.0.0.1", port), handler)
                 self.port = port
                 break
             except OSError:
@@ -661,6 +668,7 @@ class Launcher:
         self.close_ui()
         if self.httpd:
             self.httpd.shutdown()
+            self.httpd.server_close()                                  # release the port
 
 
 def make_handler(L):
