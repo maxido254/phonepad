@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 380" width="960" height="760">
+
+<defs>
+  <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9cfdb"/></linearGradient>
+  <linearGradient id="core" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232832"/><stop offset="1" stop-color="#090b0f"/></linearGradient>
+  <linearGradient id="pad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef1f7"/><stop offset="1" stop-color="#b7bfcd"/></linearGradient>
+  <radialGradient id="knob" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#5a6270"/><stop offset="1" stop-color="#1c2028"/></radialGradient>
+  <linearGradient id="bump" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b303a"/><stop offset="1" stop-color="#0d0f14"/></linearGradient>
+  <filter id="glow" x="-80%" y="-30%" width="260%" height="160%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <path id="half" d="M200 50 L262 50 C290 50 312 38 338 40 C372 44 392 90 396 150 C400 200 384 228 354 228 C326 228 308 204 284 176 C268 158 250 150 226 150 L200 150 Z"/>
+  <path id="bumper" d="M262 42 C290 26 334 18 352 40 C340 42 330 42 322 46 C300 40 282 42 266 52 Z"/>
+</defs>
+<rect width="480" height="380" rx="46" fill="#05070b"/>
+<ellipse cx="240" cy="150" rx="210" ry="120" fill="#2f7bff" opacity=".13"/>
+<g transform="translate(40,26)">
+<g id="gamepad">
+  <use href="#bumper" fill="url(#bump)"/><use href="#bumper" fill="url(#bump)" transform="translate(400,0) scale(-1,1)"/>
+  <use href="#half" fill="url(#shell)"/><use href="#half" fill="url(#shell)" transform="translate(400,0) scale(-1,1)"/>
+  <path d="M122 40 C165 47 235 47 278 40 L298 118 C306 156 292 198 252 200 L148 200 C108 198 94 156 102 118 Z" fill="url(#core)"/>
+  <rect x="168" y="62" width="64" height="48" rx="9" ry="9" fill="url(#pad)"/>
+  <path d="M158 60 C153 78 153 98 160 114" fill="none" stroke="#3d9bff" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M242 60 C247 78 247 98 240 114" fill="none" stroke="#3d9bff" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/>
+  <circle cx="200" cy="130" r="7" fill="none" stroke="#c9cfdb" stroke-width="2.5"/>
+  <rect x="170" y="126" width="12" height="5" rx="2.5" fill="#6b7482"/><rect x="218" y="126" width="12" height="5" rx="2.5" fill="#6b7482"/>
+  <circle cx="148" cy="162" r="23" fill="#0b0d11" stroke="#2f3541" stroke-width="3"/><circle cx="148" cy="162" r="14" fill="url(#knob)" stroke="#59616f" stroke-width="2"/>
+  <circle cx="252" cy="162" r="23" fill="#0b0d11" stroke="#2f3541" stroke-width="3"/><circle cx="252" cy="162" r="14" fill="url(#knob)" stroke="#59616f" stroke-width="2"/>
+  <g fill="#aeb6c4" stroke="#8d96a6" stroke-width="1.2">
+    <rect x="61" y="62" width="17" height="21" rx="4"/><rect x="61" y="95" width="17" height="21" rx="4"/>
+    <rect x="39" y="84" width="21" height="17" rx="4"/><rect x="79" y="84" width="21" height="17" rx="4"/>
+  </g>
+  <g stroke="#8d96a6" stroke-width="1.5">
+    <circle cx="330" cy="68" r="11" fill="#e3e7ef"/><circle cx="330" cy="116" r="11" fill="#e3e7ef"/>
+    <circle cx="306" cy="92" r="11" fill="#e3e7ef"/><circle cx="354" cy="92" r="11" fill="#e3e7ef"/>
+  </g>
+  <circle cx="330" cy="68" r="4.5" fill="#33d6a6"/><circle cx="330" cy="116" r="4.5" fill="#4d8dff"/>
+  <circle cx="306" cy="92" r="4.5" fill="#f08ad8"/><circle cx="354" cy="92" r="4.5" fill="#ff5d6c"/>
+</g></g>
+<text x="240" y="312" text-anchor="middle" font-family="'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="36" letter-spacing="1.5"><tspan font-weight="700" fill="#ffffff">PCStation</tspan><tspan font-weight="300" fill="#9fb0c3"> Gamepad</tspan></text>
+<g transform="translate(40,0)"><circle cx="161.0" cy="352" r="6" fill="#2f7bff"/><circle cx="187.0" cy="352" r="6" fill="#ff4d5a"/><circle cx="213.0" cy="352" r="6" fill="#3fb950"/><circle cx="239.0" cy="352" r="6" fill="#f08ad8"/></g>
+</svg>

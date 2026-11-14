@@ -1,3 +1,5 @@
+<p align="center"><img src="branding/logo.png" alt="PCStation Gamepad" width="320"></p>
+
 # PCStation Gamepad
 
 Turn Android phones into PS5-style gamepads for your Windows PC, **up to 4 at once** for local multiplayer with friends. Two apps, no servers, no internet:
@@ -38,6 +40,11 @@ Push this repo to GitHub. The **Build apps** workflow (Actions tab) produces:
 - A phone that goes quiet has its buttons released after 3 s and its slot freed after 20 s.
 - Games that expect Player 1 to be the first controller will see the first phone to connect as Player 1.
 
+## Look and feel
+
+- **Startup screen:** the app opens with an animated intro (flowing blue light, then the gamepad logo and the app name). Tap or press Back to skip it. It lives in `android/app/src/main/assets/splash.html`.
+- **Logo and icon:** `branding/logo.svg` / `logo.png` (gamepad with the name below) and `branding/icon-512.png`. The launcher icon (adaptive + legacy sizes) is in `android/app/src/main/res/mipmap-*`.
+
 ## Button mapping (virtual Xbox 360 pad)
 
 ✕=A, ○=B, □=X, △=Y, L1/R1=LB/RB, L2/R2=LT/RT (analog: touch high = light pull, slide down = full), Create/touchpad=Back, Options=Start, PS=Guide, tap a stick=L3/R3.
@@ -48,6 +55,9 @@ Push this repo to GitHub. The **Build apps** workflow (Actions tab) produces:
 android/                          Android app (Java, no dependencies)
   app/src/main/java/.../MainActivity.java   connect screen, UDP sender, gyro, profile storage
   app/src/main/assets/index.html            controller UI + layout editor (bundled, works offline)
+  app/src/main/assets/splash.html           animated startup screen
+  app/src/main/res/                         launcher icons + dark theme
+branding/                         logo.svg, logo.png, icon-512.png
 pc/pcstation_gamepad.py           Windows app (Tk window + UDP listener + up to 4 vgamepad pads)
 .github/workflows/build.yml       builds the APK and the EXE
 ```

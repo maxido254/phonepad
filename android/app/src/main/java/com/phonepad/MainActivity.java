@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.Surface;
@@ -43,6 +44,9 @@ public class MainActivity extends Activity implements SensorEventListener {
     private static final String KEY_HOST = "host";
 
     private WebView web;
+    private WebView splash;               // startup animation, shown once at launch
+    private boolean splashDone = false;
+    private final Handler ui = new Handler(Looper.getMainLooper());
     private EditText hostInput;
     private TextView hint;
 
@@ -72,7 +76,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         net = new Handler(netThread.getLooper());
         sensors = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         gyro = sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        showConnect();
+        showSplash();
     }
 
     /** Stable per-phone id so the PC can tell phones apart and give us the same player slot back. */
@@ -84,6 +88,44 @@ public class MainActivity extends Activity implements SensorEventListener {
             p.edit().putString("device_id", id).apply();
         }
         return id;
+    }
+
+    // ------------------------------------------------------------ startup screen
+
+    /** Plays assets/splash.html (light ribbons, then the gamepad logo and app name), then opens the connect screen. */
+    private void showSplash() {
+        splash = new WebView(this);
+        splash.setBackgroundColor(0xFF05070B);
+        WebSettings st = splash.getSettings();
+        st.setJavaScriptEnabled(true);
+        st.setAllowFileAccess(true);
+        splash.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        splash.setHapticFeedbackEnabled(false);
+        splash.setLongClickable(false);
+        splash.addJavascriptInterface(new SplashBridge(), "SplashNative");
+        splash.loadUrl("file:///android_asset/splash.html");
+        setContentView(splash);
+        immersive();
+        ui.postDelayed(new Runnable() {          // safety net: never get stuck on the startup screen
+            @Override public void run() { finishSplash(); }
+        }, 8000);
+    }
+
+    private void finishSplash() {
+        if (splashDone || isFinishing()) return;
+        splashDone = true;
+        if (splash != null) {
+            splash.destroy();
+            splash = null;
+        }
+        showConnect();
+    }
+
+    private class SplashBridge {
+        @JavascriptInterface
+        public void done() {
+            runOnUiThread(new Runnable() { @Override public void run() { finishSplash(); } });
+        }
     }
 
     // ------------------------------------------------------------ connect screen
@@ -390,6 +432,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     @Override
     public void onBackPressed() {
+        if (splash != null) {            // Back skips the startup animation
+            finishSplash();
+            return;
+        }
         if (web != null) {
             setGyroEnabled(false);
             gyroOn = false;
@@ -412,6 +458,8 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override
     protected void onDestroy() {
         running = false;
+        ui.removeCallbacksAndMessages(null);
+        if (splash != null) { splash.destroy(); splash = null; }
         netThread.quitSafely();
         super.onDestroy();
     }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.PCStation" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@color/pcs_bg</item>
+        <item name="android:colorBackground">@color/pcs_bg</item>
+        <item name="android:statusBarColor">@color/pcs_bg</item>
+        <item name="android:navigationBarColor">@color/pcs_bg</item>
+        <item name="android:windowSplashScreenBackground">@color/pcs_bg</item>
+    </style>
+</resources>
