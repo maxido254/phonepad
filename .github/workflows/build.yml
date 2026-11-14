@@ -63,10 +63,53 @@ jobs:
           VGAMEPAD_SKIP_VIGEMBUS_INSTALL: 'true'
         run: pip install -r "$ROOT/pc/requirements.txt" pyinstaller
       - name: Check the PC app compiles
-        run: python -m py_compile "$ROOT/pc/pcstation_gamepad.py"
+        run: python -m py_compile "$ROOT"/pc/pcstation_gamepad.py "$ROOT"/pc/pcstation_launcher.py "$ROOT"/pc/pcstation_launcher_ui.py "$ROOT"/pc/pcstation_icon.py
+      - name: Launcher tests (informational)
+        continue-on-error: true
+        run: python -m unittest discover -s "$ROOT/pc/tests" -v
       - name: Build exe
-        run: pyinstaller --onefile --windowed --name PCStation-Gamepad --collect-all vgamepad "$ROOT/pc/pcstation_gamepad.py"
+        run: pyinstaller --onefile --windowed --name PCStation-Gamepad --icon "$ROOT/branding/icon.ico" --collect-all vgamepad "$ROOT/pc/pcstation_gamepad.py"
       - uses: actions/upload-artifact@v4
         with:
           name: PCStation-Gamepad-Windows
           path: dist/PCStation-Gamepad.exe
+
+  installer:
+    name: Windows installer (MSI)
+    needs: windows
+    runs-on: windows-latest
+    continue-on-error: true      # a problem here never blocks the exe / apk downloads
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: PCStation-Gamepad-Windows
+          path: payload
+      - name: Install WiX Toolset
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          echo "$USERPROFILE\\.dotnet\\tools" >> "$GITHUB_PATH"
+          wix --version
+          wix extension add --global WixToolset.Firewall.wixext/5.0.2
+      - name: Build the MSI
+        run: |
+          F=$(find . -name Product.wxs -path '*installer*' -not -path './.git/*' | head -1)
+          if [ -z "$F" ]; then echo "installer/Product.wxs not found"; exit 1; fi
+          ROOT=$(dirname "$(dirname "$F")")
+          mkdir build
+          cp "$F" build/Product.wxs
+          cp payload/PCStation-Gamepad.exe build/
+          cp "$ROOT/branding/icon.ico" build/
+          cd build
+          sed -i "s/__VERSION__/1.0.${{ github.run_number }}/" Product.wxs
+          wix build -arch x64 -ext WixToolset.Firewall.wixext -sval -o PCStation-Gamepad-Setup.msi Product.wxs
+          ls -la
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PCStation-Gamepad-Installer
+          path: build/PCStation-Gamepad-Setup.msi
