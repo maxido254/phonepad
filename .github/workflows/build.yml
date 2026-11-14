@@ -1,4 +1,4 @@
-name: Build apps
+name: Build PCStation Gamepad
 
 on:
   push:
@@ -15,7 +15,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Locate project folder
         shell: bash
-        run: echo "ROOT=$(dirname "$(dirname "$(find . -name phonepad_pc.py -not -path './.git/*' | head -1)")")" >> "$GITHUB_ENV"
+        run: |
+          F=$(find . -name pcstation_gamepad.py -not -path './.git/*' | head -1)
+          if [ -z "$F" ]; then echo "pc/pcstation_gamepad.py not found in the repo"; ls -R; exit 1; fi
+          ROOT=$(dirname "$(dirname "$F")")
+          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
+          echo "Project folder: $ROOT"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -24,34 +29,44 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Build debug APK
-        shell: bash
         run: gradle -p "$ROOT/android" assembleDebug
+      - name: Name the APK
+        shell: bash
+        run: cp "$ROOT/android/app/build/outputs/apk/debug/app-debug.apk" "$ROOT/PCStation-Gamepad.apk"
       - uses: actions/upload-artifact@v4
         with:
-          name: PhonePad-Android
-          path: ${{ env.ROOT }}/android/app/build/outputs/apk/debug/app-debug.apk
+          name: PCStation-Gamepad-Android
+          path: ${{ env.ROOT }}/PCStation-Gamepad.apk
 
   windows:
     name: Windows app (EXE)
     runs-on: windows-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - name: Locate project folder
-        shell: bash
-        run: echo "ROOT=$(dirname "$(dirname "$(find . -name phonepad_pc.py -not -path './.git/*' | head -1)")")" >> "$GITHUB_ENV"
+        run: |
+          F=$(find . -name pcstation_gamepad.py -not -path './.git/*' | head -1)
+          if [ -z "$F" ]; then echo "pc/pcstation_gamepad.py not found in the repo"; ls -R; exit 1; fi
+          ROOT=$(dirname "$(dirname "$F")")
+          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install build tools
-        shell: bash
         env:
+          # vgamepad normally launches the ViGEmBus GUI installer during pip install,
+          # which hangs on a build server. Skip it: the driver is installed on your PC instead.
           VGAMEPAD_SKIP_VIGEMBUS_INSTALL: 'true'
         run: pip install -r "$ROOT/pc/requirements.txt" pyinstaller
+      - name: Check the PC app compiles
+        run: python -m py_compile "$ROOT/pc/pcstation_gamepad.py"
       - name: Build exe
-        shell: bash
-        run: pyinstaller --onefile --windowed --name PhonePad-PC --collect-all vgamepad "$ROOT/pc/phonepad_pc.py"
+        run: pyinstaller --onefile --windowed --name PCStation-Gamepad --collect-all vgamepad "$ROOT/pc/pcstation_gamepad.py"
       - uses: actions/upload-artifact@v4
         with:
-          name: PhonePad-Windows
-          path: dist/PhonePad-PC.exe
+          name: PCStation-Gamepad-Windows
+          path: dist/PCStation-Gamepad.exe
