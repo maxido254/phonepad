@@ -1,5 +1,8 @@
 name: Build PCStation Gamepad
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [main]
@@ -112,4 +115,30 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: PCStation-Gamepad-Installer
-          path: build/PCStation-Gamepad-Setup.msiup.msi
+          path: build/PCStation-Gamepad-Setup.msi
+
+  release:
+    name: Publish downloads
+    needs: [android, windows, installer]
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && needs.android.result == 'success' && needs.windows.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: PCStation-Gamepad-Android
+          path: dl
+      - uses: actions/download-artifact@v4
+        with:
+          name: PCStation-Gamepad-Windows
+          path: dl
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: PCStation-Gamepad-Installer
+          path: dl
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la dl
+          gh release create "v1.0.${{ github.run_number }}" dl/* --repo "${{ github.repository }}" --title "PCStation Gamepad 1.0.${{ github.run_number }}" --notes "Android app: PCStation-Gamepad.apk. Windows: PCStation-Gamepad-Setup.msi (installer) or PCStation-Gamepad.exe."
