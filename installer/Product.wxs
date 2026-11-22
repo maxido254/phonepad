@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- PCStation Gamepad installer (WiX Toolset v5). __VERSION__ is filled in by the build workflow. -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:fw="http://wixtoolset.org/schemas/v4/wxs/firewall">
-  <Package Name="PCStation Gamepad" Manufacturer="Maxido Entertainment" Version="__VERSION__"
+  <Package Name="PCStation Gamepad" Manufacturer="maxidoizooh254" Version="__VERSION__"
            UpgradeCode="3FA096BE-244E-482A-901B-3AD8DE423FCC" Scope="perMachine" Language="1033">
 
     <SummaryInformation Description="PCStation Gamepad: use your phones as game controllers, plus a controller-driven game launcher." />
@@ -10,7 +10,7 @@
 
     <Icon Id="AppIcon.ico" SourceFile="icon.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
-    <Property Id="ARPCOMMENTS" Value="By Maxido Entertainment" />
+    <Property Id="ARPCOMMENTS" Value="By maxidoizooh254" />
 
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="PCStation Gamepad" />

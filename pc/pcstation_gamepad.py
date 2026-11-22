@@ -1,4 +1,4 @@
-"""PCStation Gamepad (PC) by Maxido Entertainment.
+"""PCStation Gamepad (PC) by maxidoizooh254.
 
 Receives controller input from up to 4 phones over Wi-Fi and presents each phone to Windows as its own
 virtual Xbox 360 gamepad (Player 1-4), so you can play local multiplayer games with friends.
@@ -14,7 +14,7 @@ import webbrowser
 from pcstation_icon import PNG_B64
 
 APP_NAME = "PCStation Gamepad"
-PUBLISHER = "Maxido Entertainment"
+PUBLISHER = "maxidoizooh254"
 PORT = 8765
 MAX_PLAYERS = 4        # XInput (the Xbox 360 pad API that games use) only exposes 4 controllers
 WATCHDOG_SECONDS = 3   # release a phone's inputs if it goes quiet

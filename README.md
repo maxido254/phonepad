@@ -2,7 +2,7 @@
 
 # PCStation Gamepad
 
-**By Maxido Entertainment.** Turn Android phones into PS5-style gamepads for your Windows PC (up to 4 at once), and play from a fullscreen, controller-driven game launcher. No servers, no accounts, no internet needed.
+**By maxidoizooh254.** Turn Android phones into PS5-style gamepads for your Windows PC (up to 4 at once), and play from a fullscreen, controller-driven game launcher. No servers, no accounts, no internet needed.
 
 - **PCStation Gamepad for Android:** full-screen DualSense-style controller (sticks, D-pad, ✕ ○ □ △, L1/R1, analog L2/R2, Create/Options/PS, touchpad, gyro aiming, customizable layout).
 - **PCStation Gamepad for Windows:** receives each phone's input over Wi-Fi and shows it to games as its own virtual Xbox 360 controller (Player 1 to 4). It also opens the **Game Launcher**.
@@ -45,7 +45,7 @@ The launcher knows which controllers are connected, whether it is one or several
 
 ### Startup and sounds
 
-The launcher opens with the **Maxido Entertainment** intro, then the PCStation Gamepad logo, then the home screen (press any button to skip; switch it off in Settings). Scrolling, selecting, going back, starting a game, and controllers connecting all have their own sounds. They are synthesized live from scratch (no audio files, nothing copied), and you can turn them off in Settings. Short previews are in `branding/sound-previews/`.
+The launcher opens with the **maxidoizooh254** intro, then the PCStation Gamepad logo, then the home screen (press any button to skip; switch it off in Settings). Scrolling, selecting, going back, starting a game, and controllers connecting all have their own sounds. They are synthesized live from scratch (no audio files, nothing copied), and you can turn them off in Settings. Short previews are in `branding/sound-previews/`.
 
 ## Customize the phone layout
 

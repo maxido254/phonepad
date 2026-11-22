@@ -48,7 +48,7 @@ jobs:
           else
             echo "::warning::No signing secrets set: using a one-off key. Add KEYSTORE_BASE64, KEYSTORE_PASSWORD and KEY_ALIAS to the repo secrets so updates install over older versions."
             SP=changeit1; KP=changeit1; A=app
-            keytool -genkeypair -keystore "$RUNNER_TEMP/release.jks" -storepass "$SP" -keypass "$KP" -alias "$A" -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=App, O=Maxido Entertainment"
+            keytool -genkeypair -keystore "$RUNNER_TEMP/release.jks" -storepass "$SP" -keypass "$KP" -alias "$A" -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=maxidoizooh254, O=maxidoizooh254"
           fi
           "$BT/zipalign" -f -p 4 "$IN" "$RUNNER_TEMP/aligned.apk"
           "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-key-alias "$A" --ks-pass "pass:$SP" --key-pass "pass:$KP" --out "$ROOT/PCStation-Gamepad.apk" "$RUNNER_TEMP/aligned.apk"

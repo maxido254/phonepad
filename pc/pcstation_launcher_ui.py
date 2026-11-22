@@ -863,7 +863,7 @@ function confirmDeleteUser(u) {
 // ---------------------------------------------------------------- settings
 function settingsScreen() {
   const s = { el: el('div', 'settings'), hints: [['A', 'Change'], ['B', 'Back']], onBack: pop };
-  const toggles = [['sound', 'Sound effects', 'Navigation sounds and the startup chime'], ['intro', 'Startup intro', 'Play the Maxido Entertainment intro when the launcher opens'],
+  const toggles = [['sound', 'Sound effects', 'Navigation sounds and the startup chime'], ['intro', 'Startup intro', 'Play the maxidoizooh254 intro when the launcher opens'],
                    ['art_download', 'Download missing game pictures', 'Fetches artwork from the internet for games that have none on this PC']];
   s.render = () => {
     const keep = s.focus && s.focus.dataset && s.focus.dataset.k;
@@ -878,13 +878,13 @@ function settingsScreen() {
     const act = (label, sub, fn, k) => { const r = el('div', 'srow', `<div><b>${label}</b><small>${sub}</small></div>`); r.dataset.f = 1; r.dataset.k = k; r.onclick = fn; r.onmouseenter = () => setFocus(r); list.append(r); };
     act('Replay the startup intro', 'See it again right now', () => { pop(); runBoot(); }, 'replay');
     act('Exit launcher', 'Closes this window. Phones stay connected to PCStation Gamepad', () => confirmExit(), 'exit');
-    s.el.append(list, el('div', 'about', 'PCStation Gamepad · by Maxido Entertainment<br>Up to 4 phones plus any real controllers. Games you add are saved on this PC.'));
+    s.el.append(list, el('div', 'about', 'PCStation Gamepad · by maxidoizooh254<br>Up to 4 phones plus any real controllers. Games you add are saved on this PC.'));
     if (cur() === s) { const f = focusables(); setFocus(f.find(x => x.dataset.k === keep) || f[0]); }
   };
   s.render(); push(s);
 }
 
-// ---------------------------------------------------------------- startup intro (Maxido Entertainment, then PCStation Gamepad)
+// ---------------------------------------------------------------- startup intro (maxidoizooh254, then PCStation Gamepad)
 let bootActive = false, bootSkip = null;
 function runBoot() {
   return new Promise(resolve => {
